@@ -1,12 +1,15 @@
 import json
 import os
-import bcrypt
 import jwt
 import datetime
+from passlib.context import CryptContext
 
 # Get secrets from environment variables
 ADMIN_PASSWORD_HASH = os.environ.get('ADMIN_PASSWORD_HASH', '')
 JWT_SECRET = os.environ.get('JWT_SECRET', '')
+
+# Create a password context for verifying the hash
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def handler(event, context):
     # Standard headers for all responses
@@ -34,10 +37,10 @@ def handler(event, context):
 
     try:
         body = json.loads(event.get('body', '{}'))
-        password = body.get('password', '').encode('utf-8')
+        password = body.get('password')
 
-        # Verify password against stored hash
-        if bcrypt.checkpw(password, ADMIN_PASSWORD_HASH.encode('utf-8')):
+        # Verify password against stored hash using passlib
+        if pwd_context.verify(password, ADMIN_PASSWORD_HASH):
             # Generate JWT token that expires in 1 hour
             payload = {
                 'user': 'admin',
@@ -50,7 +53,7 @@ def handler(event, context):
                 'body': json.dumps({'token': token})
             }
         else:
-            # Return JSON error message
+            # Return JSON error message for invalid password
             return {
                 'statusCode': 401,
                 'headers': headers,
@@ -58,7 +61,7 @@ def handler(event, context):
             }
 
     except Exception as e:
-        # Return JSON error message
+        # Return JSON error message for any other server error
         return {
             'statusCode': 500,
             'headers': headers,

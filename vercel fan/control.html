@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Smart Fan Control Interface">
+  <meta name="theme-color" content="#0a0a0a">
+  <title>System Control Panel</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <style>
+    /* Inline Critical CSS for 100 Lighthouse Performance */
+    @font-face {
+      font-family: 'Orbitron';
+      font-style: normal;
+      font-weight: 400;
+      font-display: swap;
+      src: url(https://fonts.gstatic.com/s/orbitron/v31/yMJMMIlzdpvBhQQL_SC3X9yhF25-T1nyGy6xpmI.woff2) format('woff2');
+    }
+    @font-face {
+      font-family: 'Orbitron';
+      font-style: normal;
+      font-weight: 700;
+      font-display: swap;
+      src: url(https://fonts.gstatic.com/s/orbitron/v31/yMJMMIlzdpvBhQQL_SC3X9yhF25-T1nyGy6xpmI.woff2) format('woff2');
+    }
+
+    :root {
+      --primary-green: #10B981;
+      --primary-red: #EF4444;
+      --primary-cyan: #06B6D4;
+      --dark-bg: #0a0a0a;
+      --glass-bg: rgba(17, 24, 39, 0.5);
+      --glass-border: rgba(255, 255, 255, 0.1);
+      --shadow-glow: 0 0 60px rgba(6, 182, 212, 0.3);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { font-size: clamp(14px, 1.2vw, 18px); }
+    body {
+      font-family: 'Orbitron', monospace;
+      background: var(--dark-bg);
+      color: white;
+      overflow: hidden;
+      position: relative;
+      min-height: 100vh;
+    }
+
+    /* Animated Background */
+    .background-container {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: -1;
+      overflow: hidden;
+    }
+    .gradient-bg {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: linear-gradient(45deg, #0a0a0a 0%, #001a33 20%, #1b2d69 40%, #0f0f23 60%, #001a33 80%, #0a0a0a 100%);
+      background-size: 400% 400%;
+      animation: gradientShift 20s ease infinite;
+    }
+    @keyframes gradientShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    /* Main Container */
+    .main-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: clamp(1rem, 5vw, 2rem);
+      position: relative;
+    }
+
+    /* Control Panel */
+    .control-panel {
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+      border-radius: clamp(1rem, 3vw, 2rem);
+      padding: clamp(1.5rem, 5vw, 2.5rem);
+      width: clamp(320px, 90vw, 500px);
+      text-align: center;
+      box-shadow: var(--shadow-glow);
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 1s ease-out, transform 1s ease-out;
+    }
+    .control-panel.visible {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    /* User Header Styles */
+    .user-header {
+      position: fixed;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: clamp(0.75rem, 3vw, 1rem);
+      transition: all 1.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+      z-index: 10;
+      cursor: pointer;
+    }
+    .user-header.initial-state {
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) scale(1.5);
+        opacity: 0;
+        animation: fadeInHeader 1s ease-out forwards;
+    }
+    .user-header.top-left {
+      top: clamp(1rem, 5vw, 2rem);
+      left: clamp(1rem, 5vw, 2rem);
+      transform: translate(0, 0) scale(1);
+      padding: clamp(0.5rem, 1.5vw, 0.75rem);
+      border-radius: clamp(0.75rem, 2vw, 1rem);
+      background: var(--glass-bg);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--glass-border);
+    }
+    .user-header:hover .user-logo {
+        transform: scale(1.1);
+    }
+
+    @keyframes fadeInHeader {
+        to { opacity: 1; }
+    }
+
+    .user-logo {
+      width: clamp(40px, 10vw, 50px);
+      height: clamp(40px, 10vw, 50px);
+      flex-shrink: 0;
+      border-radius: 50%;
+      border: 2px solid var(--primary-cyan);
+      padding: 3px;
+      transition: transform 0.3s ease;
+    }
+    .user-info {
+      text-align: left;
+      max-width: 0;
+      overflow: hidden;
+      white-space: nowrap;
+      transition: max-width 1s ease-in-out 0.8s;
+    }
+    .user-header.animate-in .user-info {
+        max-width: 200px;
+    }
+    .user-header.no-animation .user-info {
+        max-width: 200px;
+    }
+
+    .welcome-text, .owner-text {
+        opacity: 0;
+        overflow: hidden;
+        border-right: .15em solid var(--primary-cyan);
+        white-space: nowrap;
+        margin: 0;
+        letter-spacing: .1em;
+        width: 0;
+    }
+    .user-header.animate-in .welcome-text {
+        animation: typing-welcome 1.5s steps(14, end) 1.8s forwards;
+    }
+    .user-header.animate-in .owner-text {
+        animation: typing-owner 1s steps(4, end) 3.5s forwards;
+    }
+    .user-header.no-animation .welcome-text, .user-header.no-animation .owner-text {
+        opacity: 1;
+        width: auto;
+        border-right: none;
+    }
+
+
+    .welcome-text { font-size: clamp(0.8rem, 2.5vw, 1rem); color: rgba(255, 255, 255, 0.7); }
+    .owner-text { font-size: clamp(1rem, 3.5vw, 1.25rem); font-weight: 700; color: white; }
+
+    @keyframes typing-welcome {
+      from { width: 0; opacity: 1; }
+      99.9% { border-right: .15em solid var(--primary-cyan); }
+      to { width: 14ch; opacity: 1; border-color: transparent; }
+    }
+    @keyframes typing-owner {
+      from { width: 0; opacity: 1; }
+      99.9% { border-right: .15em solid var(--primary-cyan); }
+      to { width: 4ch; opacity: 1; border-color: transparent; }
+    }
+    
+    /* Logout Button */
+    .logout-btn {
+        position: absolute;
+        top: 110%;
+        left: 0;
+        width: 100%;
+        padding: 0.5rem;
+        background: rgba(239, 68, 68, 0.5);
+        border: 1px solid rgba(239, 68, 68, 0.8);
+        border-radius: 0.5rem;
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: white;
+        cursor: pointer;
+        opacity: 0;
+        transform: translateY(-10px);
+        transition: all 0.3s ease;
+        pointer-events: none;
+    }
+    .user-header.logout-visible .logout-btn {
+        opacity: 1;
+        transform: translateY(0);
+        pointer-events: auto;
+    }
+
+    /* Typography */
+    .title {
+      font-size: clamp(1.5rem, 5vw, 2.5rem);
+      font-weight: 700;
+      background: linear-gradient(45deg, #f0f0f0, var(--primary-cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: clamp(1.5rem, 4vw, 2rem);
+    }
+    .status-text {
+      font-size: clamp(1rem, 3vw, 1.25rem);
+      font-weight: 700;
+      margin-top: clamp(1.5rem, 4vw, 2rem);
+      height: clamp(1.2rem, 4vw, 1.5rem); /* Reserve space */
+      transition: color 0.5s ease;
+    }
+
+    /* RPM Gauge Styles */
+    .gauge-container {
+        position: relative;
+        width: 100%;
+        padding-top: 50%;
+        margin-bottom: clamp(1.5rem, 4vw, 2rem);
+    }
+    .gauge-svg {
+        position: absolute;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+    }
+    .gauge-track {
+        fill: none;
+        stroke: rgba(255, 255, 255, 0.1);
+        stroke-width: 12;
+        stroke-linecap: round;
+    }
+    .gauge-value {
+        fill: none;
+        stroke: var(--primary-cyan);
+        stroke-width: 12;
+        stroke-linecap: round;
+        transition: stroke-dashoffset 1.5s cubic-bezier(0.23, 1, 0.32, 1), stroke 0.5s;
+    }
+    .gauge-text {
+        font-family: 'Orbitron', monospace;
+        font-size: clamp(2rem, 8vw, 3rem);
+        font-weight: 700;
+        fill: white;
+        text-anchor: middle;
+        dominant-baseline: middle;
+        transition: fill 0.5s;
+    }
+    .gauge-label {
+        font-size: clamp(0.75rem, 2vw, 0.875rem);
+        fill: rgba(255, 255, 255, 0.5);
+        text-anchor: middle;
+        dominant-baseline: middle;
+        text-transform: uppercase;
+    }
+
+    /* Control Buttons */
+    .button-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: clamp(1rem, 4vw, 2rem);
+    }
+    .control-btn {
+      padding: clamp(1rem, 3vw, 1.25rem) 0;
+      font-size: clamp(1.25rem, 4vw, 1.5rem);
+      font-weight: 700;
+      border: 2px solid transparent;
+      border-radius: clamp(0.75rem, 2vw, 1rem);
+      color: white;
+      font-family: 'Orbitron', monospace;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+    }
+    .control-btn:hover { transform: translateY(-3px); }
+    .control-btn:active { transform: translateY(0); }
+    .btn-on {
+      background: rgba(16, 185, 129, 0.2);
+      border-color: rgba(16, 185, 129, 0.5);
+    }
+    .btn-on:hover {
+      background: rgba(16, 185, 129, 0.4);
+      box-shadow: 0 0 25px rgba(16, 185, 129, 0.6);
+    }
+    .btn-off {
+      background: rgba(239, 68, 68, 0.2);
+      border-color: rgba(239, 68, 68, 0.5);
+    }
+    .btn-off:hover {
+      background: rgba(239, 68, 68, 0.4);
+      box-shadow: 0 0 25px rgba(239, 68, 68, 0.6);
+    }
+
+    /* Status Colors */
+    .status-on { color: #34D399; }
+    .status-off { color: #F87171; }
+    .status-pending { color: #FBBF24; }
+    .status-error { color: #ff4444; }
+
+    /* Reduced motion support */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="background-container">
+    <div class="gradient-bg"></div>
+  </div>
+
+  <div class="user-header" id="user-header">
+    <div class="user-logo">
+      <img src="images/UN1GUY.png" alt="User Logo" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
+    </div>
+    <div class="user-info">
+      <p class="welcome-text">Welcome Back,</p>
+      <p class="owner-text">Sir</p>
+    </div>
+    <button class="logout-btn" id="logout-btn">Logout</button>
+  </div>
+
+  <div class="main-container">
+    <div class="control-panel" id="control-panel">
+      <h1 class="title">SYSTEM CONTROL</h1>
+      
+      <div class="gauge-container">
+        <svg class="gauge-svg" viewBox="0 0 200 110">
+          <path class="gauge-track" d="M 20 100 A 80 80 0 0 1 180 100" />
+          <path id="gauge-value" class="gauge-value" d="M 20 100 A 80 80 0 0 1 180 100" stroke-dasharray="251.2" stroke-dashoffset="251.2" />
+          <text id="gauge-text" x="100" y="78" class="gauge-text">0</text>
+          <text x="100" y="102" class="gauge-label">RPM %</text>
+        </svg>
+      </div>
+
+      <div class="button-grid">
+        <button class="control-btn btn-on" onclick="controlFan('on')">ON</button>
+        <button class="control-btn btn-off" onclick="controlFan('off')">OFF</button>
+      </div>
+      <p id="status" class="status-text">STATUS: INITIALIZING</p>
+    </div>
+  </div>
+
+  <script>
+    // --- Basic Anti-Inspection Script ---
+    (function() {
+      'use strict';
+      document.addEventListener('contextmenu', e => e.preventDefault());
+      document.addEventListener('keydown', e => {
+        if (
+          e.key === 'F12' ||
+          (e.ctrlKey && e.shiftKey && ['I', 'J', 'C'].includes(e.key.toUpperCase())) ||
+          (e.ctrlKey && e.key.toUpperCase() === 'U')
+        ) {
+          e.preventDefault();
+        }
+      });
+    })();
+  </script>
+  
+  <script>
+    // --- Animation Orchestration Script ---
+    window.addEventListener('load', () => {
+        const userHeader = document.getElementById('user-header');
+        const controlPanel = document.getElementById('control-panel');
+        const logoutBtn = document.getElementById('logout-btn');
+
+        // Check if the animation should play
+        if (sessionStorage.getItem('playAnimation') === 'true') {
+            userHeader.classList.add('initial-state');
+            
+            // This forces the browser to apply the initial styles before animating
+            requestAnimationFrame(() => {
+                setTimeout(() => {
+                    userHeader.classList.add('top-left', 'animate-in');
+                }, 500);
+            });
+            
+            setTimeout(() => {
+                controlPanel.classList.add('visible');
+            }, 2000);
+
+            sessionStorage.removeItem('playAnimation');
+        } else {
+            userHeader.classList.add('top-left', 'no-animation');
+            controlPanel.classList.add('visible');
+        }
+
+        // Logout functionality
+        userHeader.addEventListener('click', (e) => {
+            if (e.target.id === 'logout-btn') {
+                localStorage.removeItem('fan-jwt');
+                window.location.href = '/index.html';
+            } else {
+                userHeader.classList.toggle('logout-visible');
+            }
+        });
+        
+        // Hide logout when clicking away
+        document.addEventListener('click', (e) => {
+            if (!userHeader.contains(e.target)) {
+                userHeader.classList.remove('logout-visible');
+            }
+        });
+    });
+  </script>
+
+  <script>
+    // --- Functional Control Logic ---
+    const token = localStorage.getItem('fan-jwt');
+
+    // Redirect to login if no token is found
+    if (!token) {
+      window.location.href = '/index.html';
+    }
+
+    const statusEl = document.getElementById('status');
+    const gaugeValue = document.getElementById('gauge-value');
+    const gaugeText = document.getElementById('gauge-text');
+
+    // Function to update the RPM gauge and text
+    function updateGauge(fanState, useAnimation = true) {
+      const isFanOn = (fanState === 'ON');
+      
+      if (!useAnimation) {
+        gaugeValue.style.transition = 'none';
+      } else {
+        gaugeValue.style.transition = ''; // Re-enable default CSS transition
+      }
+
+      gaugeValue.style.strokeDashoffset = isFanOn ? '0' : '251.2';
+      gaugeValue.style.stroke = isFanOn ? 'var(--primary-green)' : 'var(--primary-cyan)';
+      gaugeText.textContent = isFanOn ? '100' : '0';
+      gaugeText.setAttribute('fill', isFanOn ? 'var(--primary-green)' : 'white');
+    }
+
+    // Function to send ON/OFF command
+    async function controlFan(command) {
+      statusEl.textContent = `SENDING: ${command.toUpperCase()}...`;
+      statusEl.className = 'status-text status-pending';
+      updateGauge(command);
+
+      try {
+        const response = await fetch('/api/fan-control', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ command: command })
+        });
+
+        if (response.status === 401) {
+          statusEl.textContent = 'SESSION EXPIRED. RE-LOGIN.';
+          statusEl.className = 'status-text status-error';
+          localStorage.removeItem('fan-jwt');
+          setTimeout(() => { window.location.href = '/index.html'; }, 2000);
+          return;
+        }
+
+        if (!response.ok) { throw new Error('Command failed.'); }
+        setTimeout(checkStatus, 1500);
+
+      } catch (error) {
+        statusEl.textContent = 'Error: Connection Failed';
+        statusEl.className = 'status-text status-error';
+      }
+    }
+
+    // Function to check the fan's current status from the backend
+    async function checkStatus() {
+      try {
+        const response = await fetch('/api/fan-status', {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (response.status === 401) {
+            localStorage.removeItem('fan-jwt');
+            window.location.href = '/index.html';
+            return;
+        }
+
+        if (!response.ok) {
+            const data = await response.json();
+            throw new Error(data.error || 'Disconnected');
+        }
+
+        const data = await response.json();
+        statusEl.textContent = `STATUS: ${data.fanState}`;
+        statusEl.className = 'status-text ' + (data.fanState === 'ON' ? 'status-on' : 'status-off');
+        updateGauge(data.fanState, false);
+
+      } catch (error) {
+        statusEl.textContent = `STATUS: ${error.message.toUpperCase()}`;
+        statusEl.className = 'status-text status-error';
+        updateGauge('OFF', false);
+      }
+    }
+
+    // Initial and periodic status checks
+    window.onload = () => {
+        checkStatus(); // Initial check
+        setInterval(checkStatus, 7000); // Poll every 7 seconds
+    };
+  </script>
+</body>
+</html>

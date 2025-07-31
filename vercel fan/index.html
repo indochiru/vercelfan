@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Secure Smart Fan Control Portal">
+  <meta name="theme-color" content="#0a0a0a">
+  <title>Smart Fan Control</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <style>
+    /* Inline Critical CSS for 100 Lighthouse Performance */
+    @font-face {
+      font-family: 'Orbitron';
+      font-style: normal;
+      font-weight: 400;
+      font-display: swap;
+      src: url(https://fonts.gstatic.com/s/orbitron/v31/yMJMMIlzdpvBhQQL_SC3X9yhF25-T1nyGy6xpmI.woff2) format('woff2');
+    }
+    @font-face {
+      font-family: 'Orbitron';
+      font-style: normal;
+      font-weight: 700;
+      font-display: swap;
+      src: url(https://fonts.gstatic.com/s/orbitron/v31/yMJMMIlzdpvBhQQL_SC3X9yhF25-T1nyGy6xpmI.woff2) format('woff2');
+    }
+
+    :root {
+      --primary-gold: #FFD700;
+      --primary-purple: #9333EA;
+      --primary-cyan: #06B6D4;
+      --dark-bg: #0a0a0a;
+      --glass-bg: rgba(255, 255, 255, 0.05);
+      --glass-border: rgba(255, 255, 255, 0.1);
+      --shadow-glow: 0 0 50px rgba(6, 182, 212, 0.3);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      font-size: clamp(14px, 1.2vw, 18px);
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'Orbitron', monospace;
+      background: var(--dark-bg);
+      color: white;
+      overflow-x: hidden;
+      position: relative;
+      min-height: 100vh;
+    }
+
+    /* Animated Background */
+    .background-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      overflow: hidden;
+    }
+
+    .gradient-bg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(
+        45deg,
+        #0a0a0a 0%,
+        #001a33 20%,
+        #1b2d69 40%,
+        #0f0f23 60%,
+        #001a33 80%,
+        #0a0a0a 100%
+      );
+      background-size: 400% 400%;
+      animation: gradientShift 20s ease infinite;
+    }
+
+    @keyframes gradientShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    /* Main Container */
+    .main-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: clamp(1rem, 5vw, 2rem);
+      position: relative;
+    }
+
+    /* Authentication Portal */
+    .auth-portal {
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+      border-radius: clamp(1rem, 3vw, 2rem);
+      padding: clamp(2rem, 6vw, 3rem);
+      width: clamp(300px, 90vw, 450px);
+      text-align: center;
+      box-shadow: var(--shadow-glow);
+      animation: portalEntrance 2s ease-out;
+      position: relative;
+      overflow: hidden;
+    }
+
+    @keyframes portalEntrance {
+      0% {
+        opacity: 0;
+        transform: scale(0.8) translateY(50px);
+        filter: blur(10px);
+      }
+      100% {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+        filter: blur(0);
+      }
+    }
+
+    .auth-portal::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(45deg, transparent, rgba(6, 182, 212, 0.1), transparent);
+      animation: shimmer 3s ease-in-out infinite;
+      pointer-events: none;
+    }
+
+    @keyframes shimmer {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+
+    /* Logo Animation */
+    .logo-container {
+      position: relative;
+      margin-bottom: clamp(1.5rem, 4vw, 2rem);
+    }
+
+    .fan-logo {
+      width: clamp(60px, 15vw, 100px);
+      height: clamp(60px, 15vw, 100px);
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: logoSpin 10s linear infinite;
+      position: relative;
+      color: var(--primary-cyan);
+    }
+
+    @keyframes logoSpin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Typography */
+    .title {
+      font-size: clamp(1.5rem, 5vw, 2.5rem);
+      font-weight: 700;
+      background: linear-gradient(45deg, #f0f0f0, var(--primary-cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: clamp(0.5rem, 2vw, 1rem);
+      animation: titleGlow 2s ease-in-out infinite alternate;
+    }
+
+    @keyframes titleGlow {
+      0% { filter: drop-shadow(0 0 5px rgba(6, 182, 212, 0.5)); }
+      100% { filter: drop-shadow(0 0 20px rgba(6, 182, 212, 0.8)); }
+    }
+
+    .subtitle {
+      font-size: clamp(0.8rem, 2.5vw, 1rem);
+      color: rgba(255, 255, 255, 0.7);
+      margin-bottom: clamp(2rem, 5vw, 3rem);
+      animation: fadeInUp 1s ease-out 0.5s both;
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Input Field */
+    .input-container {
+      position: relative;
+      margin-bottom: clamp(1.5rem, 4vw, 2rem);
+    }
+
+    .fan-input {
+      width: 100%;
+      padding: clamp(1rem, 3vw, 1.25rem);
+      font-size: clamp(0.9rem, 2.5vw, 1.1rem);
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: clamp(0.5rem, 2vw, 1rem);
+      color: white;
+      font-family: 'Orbitron', monospace;
+      text-align: center;
+      letter-spacing: 0.2em;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
+    }
+
+    .fan-input:focus {
+      outline: none;
+      border-color: var(--primary-cyan);
+      box-shadow: 0 0 30px rgba(6, 182, 212, 0.3);
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .fan-input::placeholder {
+      color: rgba(255, 255, 255, 0.5);
+      letter-spacing: 0.1em;
+    }
+
+    /* Access Button */
+    .access-btn {
+      width: 100%;
+      padding: clamp(1rem, 3vw, 1.25rem);
+      font-size: clamp(1rem, 2.5vw, 1.2rem);
+      font-weight: 700;
+      background: linear-gradient(45deg, var(--primary-cyan), var(--primary-purple));
+      border: none;
+      border-radius: clamp(0.5rem, 2vw, 1rem);
+      color: white;
+      font-family: 'Orbitron', monospace;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .access-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+      transition: left 0.5s ease;
+    }
+
+    .access-btn:hover::before {
+      left: 100%;
+    }
+
+    .access-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(6, 182, 212, 0.4);
+    }
+
+    .access-btn:active {
+      transform: translateY(0);
+    }
+
+    .access-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* Error Message */
+    .error-msg {
+      color: #ff4444;
+      font-size: clamp(0.8rem, 2vw, 0.9rem);
+      margin-top: clamp(0.5rem, 2vw, 1rem);
+      opacity: 0;
+      transform: translateY(-10px);
+      transition: all 0.3s ease;
+      height: clamp(1rem, 3vw, 1.5rem); /* Reserve space to prevent layout shift */
+    }
+
+    .error-msg.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    
+    /* Shake animation for incorrect password */
+    .shake-error {
+        animation: shake 0.6s cubic-bezier(.36,.07,.19,.97) both;
+    }
+
+    @keyframes shake {
+      10%, 90% { transform: translateX(-1px); }
+      20%, 80% { transform: translateX(2px); }
+      30%, 50%, 70% { transform: translateX(-4px); }
+      40%, 60% { transform: translateX(4px); }
+    }
+    
+    /* Reduced motion support */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="background-container">
+    <div class="gradient-bg"></div>
+  </div>
+
+  <div class="main-container">
+    <div class="auth-portal">
+      <div class="logo-container">
+        <div class="fan-logo">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16" width="100%" height="100%">
+            <path d="M10.147 8.246a.5.5 0 0 1-.502-.864l1.264-.729a.5.5 0 1 1 .5.866l-1.262.727zM8.07 7.754a.5.5 0 0 1 .865.502l-.729 1.264a.5.5 0 1 1-.866-.5l.73-1.266zM6.558 10.147a.5.5 0 0 1 .864-.502l.729 1.264a.5.5 0 1 1-.866.5l-.729-1.264zM8.246 5.853a.5.5 0 0 1-.864.502L6.118 5.627a.5.5 0 1 1 .866-.5l1.262.727zM7.754 7.93a.5.5 0 0 1-.502-.865l1.264-.729a.5.5 0 1 1 .5.866l-1.262.727zM5.853 7.754a.5.5 0 0 1 .865.502l-.729 1.264a.5.5 0 1 1-.866-.5l.73-1.266zM4.34 10.147a.5.5 0 0 1 .864-.502l.729 1.264a.5.5 0 1 1-.866.5l-.729-1.264zM5.627 6.118a.5.5 0 0 1 .502-.864l1.264-.729a.5.5 0 1 1-.5.866L5.627 6.118zM8 16a8 8 0 1 0 0-16 8 8 0 0 0 0 16zM1 8a7 7 0 1 1 14 0A7 7 0 0 1 1 8z"/>
+          </svg>
+        </div>
+      </div>
+      
+      <h1 class="title">SYSTEM CONTROL</h1>
+      <p class="subtitle">Secure Fan Access Portal</p>
+      
+      <div class="input-container">
+        <input type="password" class="fan-input" id="password" placeholder="◦ ◦ ◦ ◦ ◦ ◦ ◦ ◦" autocomplete="current-password">
+      </div>
+      
+      <button class="access-btn" id="loginButton">
+        <span>LOGIN</span>
+      </button>
+      
+      <div class="error-msg" id="error"></div>
+    </div>
+  </div>
+
+  <script>
+    // --- Basic Anti-Inspection Script ---
+    (function() {
+      'use strict';
+      document.addEventListener('contextmenu', e => e.preventDefault());
+      document.addEventListener('keydown', e => {
+        if (
+          e.key === 'F12' ||
+          (e.ctrlKey && e.shiftKey && ['I', 'J', 'C'].includes(e.key.toUpperCase())) ||
+          (e.ctrlKey && e.key.toUpperCase() === 'U')
+        ) {
+          e.preventDefault();
+        }
+      });
+    })();
+  </script>
+
+  <script>
+    // --- Functional Login Logic ---
+    const passwordInput = document.getElementById('password');
+    const loginButton = document.getElementById('loginButton');
+    const errorMsg = document.getElementById('error');
+    const authPortal = document.querySelector('.auth-portal');
+
+    async function login() {
+      loginButton.disabled = true;
+      loginButton.querySelector('span').textContent = 'Processing...';
+      errorMsg.classList.remove('show');
+      authPortal.classList.remove('shake-error');
+
+      try {
+        const response = await fetch('/api/auth', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 'password': passwordInput.value })
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          loginButton.querySelector('span').textContent = 'Access Granted';
+          loginButton.style.background = 'linear-gradient(45deg, #10B981, #34D399)';
+          sessionStorage.setItem('playAnimation', true);
+          localStorage.setItem('fan-jwt', data.token);
+          setTimeout(() => { window.location.href = '/control.html'; }, 1000);
+        } else {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Access Denied.');
+        }
+      } catch (error) {
+        authPortal.classList.add('shake-error');
+        errorMsg.textContent = error.message;
+        errorMsg.classList.add('show');
+        loginButton.disabled = false;
+        loginButton.querySelector('span').textContent = 'LOGIN';
+        passwordInput.value = '';
+      }
+    }
+
+    loginButton.addEventListener('click', login);
+    passwordInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        login();
+      }
+    });
+    passwordInput.addEventListener('input', () => {
+        errorMsg.classList.remove('show');
+    });
+  </script>
+</body>
+</html>
